@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash Focus: Mixed Users</title>
+<style>
+  :root{--navy:#0b2341;--teal:#00a3ad;--light:#f3f6f9;--text:#1d2633;--muted:#5b6675;--line:#d5dbe3}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--light);color:var(--text)}
+  header{background:var(--navy);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  header h1{margin:0;font-size:1.1rem}
+  header .sess{font-size:.8rem;opacity:.85}
+  header a{color:#fff;font-size:.8rem;opacity:.8}
+  main{max-width:760px;margin:14px auto;padding:0 10px}
+  .card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:18px;margin-bottom:14px}
+  .meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:.8rem;color:var(--muted);margin-bottom:8px}
+  h2{margin:.2rem 0 1rem;font-size:1.15rem}
+  h3{margin:.2rem 0 .6rem;font-size:1rem;color:var(--navy)}
+  .lbl{font-size:.75rem;font-weight:700;color:var(--muted);margin-top:12px}
+  .q{font-size:1rem;margin:4px 0 12px}
+  .opt{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:10px;margin:7px 0;cursor:pointer}
+  .scale{display:flex;gap:6px;margin:10px 0}
+  .scale label{flex:1;text-align:center;border:1px solid var(--line);border-radius:8px;padding:10px 0;cursor:pointer;font-weight:600}
+  .scale input{display:none}
+  .scale label.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .scale-labels{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+  .rank{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:8px;margin:7px 0}
+  .rank .n{font-weight:700;width:22px}
+  .rank .t{flex:1}
+  .rank button{border:none;background:var(--light);border-radius:6px;padding:6px 10px;cursor:pointer}
+  textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit}
+  input[type=text],input[type=password],select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:1rem;background:#fff}
+  .field{margin:10px 0}
+  .field label{display:block;font-weight:600;font-size:.9rem;margin-bottom:5px}
+  .btn{display:block;width:100%;margin-top:12px;padding:12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-size:1rem;font-weight:600;cursor:pointer}
+  .btn.alt{background:var(--navy)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .btn.red{background:#b3261e}
+  .btn:disabled{background:#9fb3c2;cursor:not-allowed}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row .btn{flex:1;min-width:120px}
+  .timer{font-weight:700;color:var(--navy)}
+  .note{font-size:.82rem;color:var(--muted);margin-top:10px}
+  .err{color:#b00020;font-size:.85rem;margin-top:8px;min-height:1em}
+  .warn{background:#fff4e5;border:1px solid #f0b46b;border-radius:8px;padding:10px;font-size:.85rem;margin-bottom:12px}
+  .wait{text-align:center;padding:30px 10px}
+  .bar{margin:8px 0}
+  .bar .top{display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:3px;gap:8px}
+  .bar .track{background:#e6ebf0;border-radius:6px;height:16px;overflow:hidden}
+  .bar .fill{background:var(--teal);height:100%}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:16px;padding:6px 10px;font-size:.82rem;cursor:pointer}
+  .chip.cur{background:var(--navy);color:#fff}
+  .pill{display:inline-block;border-radius:12px;padding:3px 10px;font-size:.78rem;font-weight:700;background:#eef1f4}
+  .pill.open{background:#e7f6f2;color:#0a7d68}
+  .join{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .join img{width:150px;height:150px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+  .link{font-family:Consolas,monospace;font-size:.85rem;word-break:break-all;background:var(--light);padding:8px;border-radius:6px;margin:6px 0}
+  .big{font-size:2rem;font-weight:700;color:var(--navy)}
+  .txtans{border-left:3px solid var(--teal);padding:6px 10px;margin:6px 0;background:var(--light);font-size:.9rem}
+  .qrfull{position:fixed;inset:0;background:rgba(11,35,65,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:9;cursor:pointer;text-align:center}
+  .qrfull img{width:min(70vw,70vh);height:min(70vw,70vh);background:#fff;border-radius:12px;padding:10px}
+  footer{text-align:center;font-size:.75rem;color:var(--muted);margin:10px 0 24px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Flash Focus: Mixed Users</h1><div class="sess" id="sessLine"></div></div>
+  <span><a href="#/">Home</a> &nbsp;&middot;&nbsp; <a href="#/host">Facilitator</a></span>
+</header>
+<main id="app"></main>
+<footer>Polls are not quizzes. There are no right or wrong answers.</footer>
+
+<script>
+/* ===== ONE-TIME SETUP: your Google Apps Script web app link (ends in /exec) ===== */
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbzZsciVxuumXXL4TLRmKVoL9f7-pqNjHPe3xifAWcPp_MP2cisViDazI55aMiWxn4re/exec";
+const REFRESH_MS = 4000;
+
+/* ===== POLLS FOR THIS PAGE =====
+   POLL_SET is the set name this page uses. If the Polls tab in your Google Sheet has rows with the
+   same Set name, the Sheet version wins. If not, the page uses the polls below. */
+const POLL_SET = "Flash Focus Mixed Users";
+const WELCOME = "Welcome to Flash Focus: Mixed Users";
+const SAMPLE_POLLS = [
+ {
+  "title": "Your Experience",
+  "type": "Single Choice",
+  "timer": 20,
+  "question": "How long have you used Cotality platforms?",
+  "options": [
+   "New (under 3 months)",
+   "3 to 12 months",
+   "1 to 3 years",
+   "More than 3 years"
+  ],
+  "notes": "Use the split to pair new and experienced users for practice."
+ },
+ {
+  "title": "Your Role",
+  "type": "Single Choice",
+  "timer": 20,
+  "question": "Which best describes your role today?",
+  "options": [
+   "Field adjuster",
+   "Desk adjuster",
+   "Assessor / inspector",
+   "QA reviewer",
+   "Supervisor / claims manager",
+   "Operations / dispatch staff",
+   "Customer-facing staff",
+   "Underwriting / valuation staff"
+  ],
+  "notes": ""
+ },
+ {
+  "title": "Platforms You Use",
+  "type": "Multiple Choice",
+  "timer": 45,
+  "question": "Which Cotality platforms do you use in your work?",
+  "options": [
+   "Claims Workspace™",
+   "Estimate™",
+   "Estimate™ mobile app (iOS)",
+   "CAPTURE™",
+   "Inspect™",
+   "Engage™ / Video Connect®",
+   "Verify™",
+   "Scope™",
+   "Validate™",
+   "Dispatch™",
+   "LINK®",
+   "RiskMeter",
+   "Residential Valuation",
+   "Commercial Valuation"
+  ],
+  "notes": "Choose all that apply. Shape examples around the top platforms."
+ },
+ {
+  "title": "Confidence Check",
+  "type": "Rating Scale",
+  "timer": 20,
+  "question": "How confident do you feel in the Cotality platform you use most?",
+  "low": "Not confident",
+  "high": "Very confident",
+  "notes": "Compare this average with the Experience poll."
+ },
+ {
+  "title": "Focus Areas",
+  "type": "Ranking",
+  "timer": 45,
+  "question": "Rank these areas by how much you want to cover today.",
+  "options": [
+   "Claims Workspace™ workflows and reports",
+   "Estimate™ diagramming and pricing",
+   "Field tools: Estimate™ mobile app, CAPTURE™, Inspect™",
+   "Review tools: Validate™, Verify™, Scope™",
+   "Risk and valuation: RiskMeter, Residential and Commercial Valuation"
+  ],
+  "notes": "Spend extra time on the top two."
+ },
+ {
+  "title": "Peer Tip",
+  "type": "Open Text",
+  "timer": 60,
+  "question": "What is one tip or question about any Cotality platform you want to share with the group?",
+  "notes": "Read two or three answers aloud. Invite experienced users to respond."
+ }
+];
+
+/* ===================== APP CODE (no edits needed) ===================== */
+const API = String(ENDPOINT).replace(/<[^>]*>/g, "").replace(/[\s"'\u201C\u201D\u2018\u2019]/g, "").split(/[?#]/)[0].replace(/\/+$/, "");
+const CONFIGURED = /^https:\/\/script\.google(usercontent)?\.com\/.+\/exec$/.test(API);
+const APP_URL = location.origin + location.pathname;
+const params = new URLSearchParams(location.search);
+const app = document.getElementById("app");
+const PLATFORM = /zoom/i.test(navigator.userAgent) ? "Zoom" : (window.parent !== window ? "Teams" : "Web");
+
+const MEM = {};
+const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return MEM[k] || null; } },
+                set(k,v){ try { localStorage.setItem(k,v); } catch(e){ MEM[k] = v; } } };
+let PID = store.get("ff_pid"); if (!PID){ PID = "p-" + Math.random().toString(36).slice(2,10); store.set("ff_pid", PID); }
+
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function codeKey(s){ return String(s || "").trim().toUpperCase().replace(/[^A-Z0-9\-_]/g, "").slice(0, 40); }
+function setSessLine(t){ document.getElementById("sessLine").textContent = t || ""; }
+function joinUrl(code){ return APP_URL + "?session=" + encodeURIComponent(code); }
+function qrUrl(text, size){ return "https://api.qrserver.com/v1/create-qr-code/?margin=8&size=" + size + "x" + size + "&data=" + encodeURIComponent(text); }
+function setupWarn(){
+  return `<div class="warn"><b>Setup needed:</b> paste your Google Apps Script link into ENDPOINT in this file. Until then you can only preview.
+    <div class="lbl">LINK THIS PAGE SEES RIGHT NOW</div><div class="link">${esc(API || "(empty)")}</div>
+    The link must start with https://script.google.com/ and end with /exec.</div>`;
+}
+
+async function api(action, extra){
+  const u = new URL(API);
+  u.searchParams.set("action", action);
+  Object.entries(extra || {}).forEach(([k, v]) => u.searchParams.set(k, String(v)));
+  u.searchParams.set("_", Date.now());
+  const r = await fetch(u.toString(), { method: "GET", redirect: "follow" });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || "Request failed");
+  return j;
+}
+async function loadPolls(set){
+  let polls = [];
+  try { polls = (await api("polls", { set })).polls || []; } catch(e){ if (set !== POLL_SET) throw e; }
+  if (!polls.length && set === POLL_SET) polls = SAMPLE_POLLS;
+  return polls;
+}
+function sendAnswer(obj){ return fetch(API, { method: "POST", mode: "no-cors", body: new URLSearchParams(obj) }); }
+
+let LOOPS = [], countdownId = null;
+function every(fn, ms){ LOOPS.push(setInterval(fn, ms)); }
+function stopLoops(){ LOOPS.forEach(clearInterval); LOOPS = []; clearInterval(countdownId); }
+function countdown(el, seconds, startedAt, onZero){
+  clearInterval(countdownId); if (!el) return;
+  const end = (startedAt || Date.now()) + seconds * 1000;
+  const tick = () => { const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    el.textContent = left > 0 ? left + "s" : "Time's up";
+    if (left <= 0){ clearInterval(countdownId); if (onZero) onZero(); } };
+  tick(); countdownId = setInterval(tick, 500);
+}
+
+function route(){
+  stopLoops(); app.dataset.view = "";
+  const h = location.hash.replace(/^#/, "");
+  if (h.startsWith("/host")) return hostLogin();
+  if (h.startsWith("/preview")) return preview();
+  if (h === "/") return home();
+  if (h.startsWith("/join") || params.get("session")) return joinStart();
+  return home();
+}
+window.addEventListener("hashchange", route);
+
+function home(){
+  setSessLine("");
+  app.innerHTML = `${CONFIGURED ? "" : setupWarn()}
+    <div class="card"><h2>${esc(WELCOME)}</h2>
+      <button class="btn" onclick="location.hash='/join'">I'm a participant</button>
+      <button class="btn alt" onclick="location.hash='/host'">I'm the facilitator</button>
+      <button class="btn ghost" onclick="location.hash='/preview'">Preview the polls</button></div>`;
+}
+
+/* ---------- poll screens ---------- */
+function pollBody(p){
+  if (p.type === "Single Choice" || p.type === "Multiple Choice"){
+    const kind = p.type === "Single Choice" ? "radio" : "checkbox";
+    return (p.options || []).map(o => `<label class="opt"><input type="${kind}" name="a" value="${esc(o)}"> ${esc(o)}</label>`).join("")
+      + (p.type === "Multiple Choice" ? `<p class="note">Choose all that apply.</p>` : "");
+  }
+  if (p.type === "Rating Scale") return `<div class="scale">${[1,2,3,4,5].map(v => `<label><input type="radio" name="a" value="${v}"><span>${v}</span></label>`).join("")}</div>
+      <div class="scale-labels"><span>1 = ${esc(p.low || "Low")}</span><span>5 = ${esc(p.high || "High")}</span></div>`;
+  if (p.type === "Ranking") return `<div id="rankList"></div><p class="note">Use the arrows to move items up or down.</p>`;
+  return `<textarea id="txt" maxlength="500" placeholder="Type your answer..."></textarea><p class="note">Please don't include claim numbers or policyholder details.</p>`;
+}
+function wirePoll(p){
+  if (p.type === "Rating Scale") document.querySelectorAll(".scale input").forEach(i => i.addEventListener("change", () => {
+    document.querySelectorAll(".scale label").forEach(l => l.classList.remove("on")); i.parentElement.classList.add("on"); }));
+  if (p.type === "Ranking"){ window._rank = [...(p.options || [])]; drawRank(); }
+}
+function drawRank(){
+  const el = document.getElementById("rankList"); if (!el) return;
+  el.innerHTML = window._rank.map((o, i) => `<div class="rank"><span class="n">${i + 1}.</span><span class="t">${esc(o)}</span>
+    <button onclick="mv(${i},-1)" ${i === 0 ? "disabled" : ""}>&#9650;</button><button onclick="mv(${i},1)" ${i === window._rank.length - 1 ? "disabled" : ""}>&#9660;</button></div>`).join("");
+}
+function mv(i, d){ const r = window._rank, j = i + d; [r[i], r[j]] = [r[j], r[i]]; drawRank(); }
+function getAnswer(p){
+  if (p.type === "Single Choice" || p.type === "Rating Scale"){ const c = document.querySelector('input[name="a"]:checked'); return c ? c.value : ""; }
+  if (p.type === "Multiple Choice") return [...document.querySelectorAll('input[name="a"]:checked')].map(c => c.value).join(" | ");
+  if (p.type === "Ranking") return window._rank.map((o, i) => `${i + 1}. ${o}`).join(" | ");
+  const t = document.getElementById("txt"); return t ? t.value.trim() : "";
+}
+function showPoll(p, n, N, startedAt, onSubmit){
+  app.innerHTML = `<div class="card"><div class="meta"><span>POLL ${n} of ${N}: ${esc(p.title)}</span><span>Type: ${esc(p.type)} | Timer: <span class="timer" id="t"></span></span></div>
+    <div class="q">${esc(p.question)}</div>${pollBody(p)}<div class="err" id="err"></div><button class="btn" id="sub">Submit</button></div>`;
+  wirePoll(p); countdown(document.getElementById("t"), p.timer || 30, startedAt);
+  document.getElementById("sub").onclick = async () => {
+    const ans = getAnswer(p), btn = document.getElementById("sub");
+    if (!ans){ document.getElementById("err").textContent = "Please choose or enter an answer."; return; }
+    btn.disabled = true; btn.textContent = "Sending...";
+    try { await onSubmit(ans); } catch (e){ btn.disabled = false; btn.textContent = "Submit"; document.getElementById("err").textContent = "Couldn't send your answer. Try again."; }
+  };
+}
+function waitScreen(msg, sub){
+  if (app.dataset.view === "wait:" + msg) return;
+  app.dataset.view = "wait:" + msg; clearInterval(countdownId);
+  app.innerHTML = `<div class="card wait"><h2>${esc(msg)}</h2>${sub ? `<p class="note">${esc(sub)}</p>` : ""}</div>`;
+}
+function wrapUpParticipant(){
+  stopLoops(); app.dataset.view = "wrap";
+  app.innerHTML = `<div class="card"><h2>SESSION WRAP-UP</h2><p class="q">Thank you! Your answers are in.</p><p class="note">You can close this page.</p></div>`;
+}
+function preview(){
+  setSessLine("Preview: answers are not saved"); let i = 0;
+  const next = () => { if (i >= SAMPLE_POLLS.length) return wrapUpParticipant();
+    showPoll(SAMPLE_POLLS[i], i + 1, SAMPLE_POLLS.length, Date.now(), async () => { i++; next(); }); };
+  next();
+}
+
+/* ---------- participant ---------- */
+const P = { session: "", set: "", polls: [] };
+const answeredKey = i => "ff_ans_" + P.session + "_" + P.set + "_" + i;
+const answered = i => store.get(answeredKey(i)) === "1";
+
+function joinStart(){
+  if (!CONFIGURED){ app.innerHTML = `<div class="warn">This poll isn't connected yet. Ask your facilitator for the correct link.</div>`; return; }
+  const fromLink = codeKey(params.get("session"));
+  if (fromLink && !location.hash.startsWith("#/join")) return joinSession(fromLink);
+  app.innerHTML = `<div class="card"><h2>Join a session</h2>
+    <div class="field"><label for="code">Session code</label><input type="text" id="code" placeholder="e.g., STORM-Q1" value="${esc(fromLink)}"></div>
+    <div class="err" id="err"></div><button class="btn" id="go">Join</button><p class="note">Your answers are anonymous.</p></div>`;
+  document.getElementById("go").onclick = () => { const v = codeKey(document.getElementById("code").value);
+    if (!v){ document.getElementById("err").textContent = "Please enter a session code."; return; } joinSession(v); };
+}
+function joinSession(code){
+  P.session = code; P.set = ""; P.polls = [];
+  setSessLine("Session: " + code); waitScreen("Connecting\u2026");
+  tickParticipant(); every(tickParticipant, REFRESH_MS);
+}
+let busy = false;
+async function tickParticipant(){
+  if (busy) return; busy = true;
+  try {
+    const { state } = await api("state", { session: P.session });
+    if (state.ended) return wrapUpParticipant();
+    if (!state.set) return waitScreen("Waiting for your facilitator to start\u2026", "Keep this page open.");
+    if (state.set !== P.set || !P.polls.length){ P.polls = await loadPolls(state.set); P.set = state.set; app.dataset.view = ""; }
+    const N = P.polls.length; if (!N) return waitScreen("No polls found yet.");
+    if (state.mode === "self"){
+      const i = P.polls.findIndex((_, k) => !answered(k));
+      if (i < 0) return wrapUpParticipant();
+      if (app.dataset.view === "poll:" + i) return;
+      app.dataset.view = "poll:" + i;
+      return showPoll(P.polls[i], i + 1, N, Date.now(), ans => submitAnswer(i, ans, state));
+    }
+    const i = Math.min(state.current, N - 1);
+    if (!state.open) return waitScreen(answered(i) ? "Thanks! Waiting for the next poll\u2026" : "Waiting for your facilitator to open the next poll\u2026");
+    if (answered(i)) return waitScreen("Thanks! Your answer is in.", "Waiting for the next poll\u2026");
+    if (app.dataset.view === "poll:" + i) return;
+    app.dataset.view = "poll:" + i;
+    showPoll(P.polls[i], i + 1, N, state.opened || Date.now(), ans => submitAnswer(i, ans, state));
+  } catch (e){
+    if (!app.dataset.view || app.dataset.view.startsWith("wait")) waitScreen("Reconnecting\u2026", "Check your internet connection.");
+  } finally { busy = false; }
+}
+async function submitAnswer(i, ans, state){
+  const p = P.polls[i];
+  await sendAnswer({ session: P.session, poll_set: P.set, trainer: state.trainer || "", poll_number: String(i + 1),
+    poll_title: p.title, poll_type: p.type, response: ans, participant_id: PID, platform: PLATFORM });
+  store.set(answeredKey(i), "1"); app.dataset.view = "";
+  waitScreen("Thanks! Your answer is in.", "Waiting for the next poll\u2026"); tickParticipant();
+}
+
+/* ---------- facilitator ---------- */
+const H = { session: "", pin: "", trainer: "", set: "", polls: [], state: null, rows: [], view: "live" };
+
+async function hostLogin(){
+  setSessLine("Facilitator");
+  if (!CONFIGURED){ app.innerHTML = setupWarn(); return; }
+  app.innerHTML = `<div class="card"><h2>Start or resume a session</h2>
+    <div class="field"><label for="hs">Session code</label><input type="text" id="hs" value="FF-${Math.random().toString(36).slice(2,6).toUpperCase()}"></div>
+    <div class="field"><label for="hn">Your name (optional)</label><input type="text" id="hn"></div>
+    <div class="field"><label for="hset">Poll set</label><select id="hset"><option>${esc(POLL_SET)}</option></select></div>
+    <div class="field"><label for="hm">How should polls run?</label><select id="hm"><option value="live">Live: I open each poll</option><option value="self">Self-paced</option></select></div>
+    <div class="field"><label for="hp">Facilitator PIN</label><input type="password" id="hp"></div>
+    <div class="err" id="err"></div><button class="btn alt" id="start">Start session</button></div>`;
+  document.getElementById("start").onclick = hostStart;
+  try { const { sets } = await api("sets");
+    const all = [POLL_SET].concat(sets.filter(s => s !== POLL_SET));
+    document.getElementById("hset").innerHTML = all.map(s => `<option>${esc(s)}</option>`).join("");
+  } catch (e){ document.getElementById("err").textContent = "Couldn't reach the Google Sheet. Check the ENDPOINT link and that access is set to Anyone."; }
+}
+async function hostStart(){
+  const err = document.getElementById("err"), btn = document.getElementById("start");
+  H.session = codeKey(document.getElementById("hs").value); H.trainer = document.getElementById("hn").value.trim();
+  H.set = document.getElementById("hset").value; H.pin = document.getElementById("hp").value.trim();
+  const mode = document.getElementById("hm").value;
+  if (!H.session) return err.textContent = "Please enter a session code.";
+  if (!H.set) return err.textContent = "Please choose a poll set.";
+  btn.disabled = true; btn.textContent = "Starting\u2026";
+  try {
+    await api("login", { pin: H.pin });
+    H.polls = await loadPolls(H.set);
+    const { state } = await api("state", { session: H.session });
+    const change = { session: H.session, pin: H.pin, set: H.set, mode, trainer: H.trainer, ended: "false" };
+    if (state.set !== H.set){ change.current = 0; change.open = "false"; }
+    H.state = (await api("control", change)).state;
+    setSessLine("Facilitator | Session: " + H.session);
+    renderHost(); refreshResults(); every(refreshResults, REFRESH_MS);
+  } catch (e){ btn.disabled = false; btn.textContent = "Start session"; err.textContent = e.message; }
+}
+async function control(change){
+  try { H.state = (await api("control", Object.assign({ session: H.session, pin: H.pin }, change))).state; }
+  catch (e){ alert("Couldn't update the session: " + e.message); }
+  renderHost();
+}
+async function refreshResults(){
+  try { H.rows = (await api("results", { session: H.session, pin: H.pin })).rows || [];
+    if (H.view === "wrap") return renderWrap();
+    const i = Math.min(H.state.current || 0, Math.max(0, H.polls.length - 1)), el = document.getElementById("res");
+    if (el && H.polls[i]) el.innerHTML = resultsHtml(H.polls[i], i + 1);
+  } catch (e){}
+}
+function latestRows(n){ const by = {}; H.rows.filter(r => r.set === H.set && Number(r.n) === n).forEach(r => { by[r.pid] = r; }); return Object.values(by); }
+function bars(items, total, pct){
+  const max = Math.max(1, ...items.map(x => x.v));
+  return items.map(x => `<div class="bar"><div class="top"><span>${esc(x.k)}</span><span><b>${x.label != null ? esc(x.label) : x.v}</b>${pct && total ? ` (${Math.round(100 * x.v / total)}%)` : ""}</span></div>
+    <div class="track"><div class="fill" style="width:${Math.round(100 * x.v / max)}%"></div></div></div>`).join("");
+}
+function resultsHtml(p, n){
+  const rows = latestRows(n), total = rows.length; let body = "";
+  if (!total) body = `<p class="note">No responses yet.</p>`;
+  else if (p.type === "Single Choice" || p.type === "Multiple Choice"){
+    const c = {}; (p.options || []).forEach(o => c[o] = 0);
+    rows.forEach(r => String(r.r).split(" | ").forEach(x => { if (x) c[x] = (c[x] || 0) + 1; }));
+    body = bars(Object.entries(c).map(([k, v]) => ({ k, v })).sort((a, b) => b.v - a.v), total, true);
+  } else if (p.type === "Rating Scale"){
+    const c = {1:0,2:0,3:0,4:0,5:0}; let sum = 0;
+    rows.forEach(r => { const v = parseInt(r.r, 10); if (c[v] !== undefined){ c[v]++; sum += v; } });
+    body = `<div class="big">${(sum / total).toFixed(1)} / 5 average</div>` + bars([1,2,3,4,5].map(v => ({ k: String(v), v: c[v] })), total, true);
+  } else if (p.type === "Ranking"){
+    const k = (p.options || []).length, pts = {}; (p.options || []).forEach(o => pts[o] = 0);
+    rows.forEach(r => String(r.r).split(" | ").forEach(s => { const m = s.match(/^(\d+)\.\s(.*)$/); if (m && pts[m[2]] !== undefined) pts[m[2]] += k - Number(m[1]) + 1; }));
+    body = bars(Object.keys(pts).map(o => ({ k: o, v: pts[o] })).sort((a, b) => b.v - a.v), total, false) + `<p class="note">Points: 1st place = ${k} \u2026 last = 1.</p>`;
+  } else body = rows.slice().reverse().map(r => `<div class="txtans">${esc(r.r)}</div>`).join("");
+  return `<div class="meta"><span>Responses: <b>${total}</b></span></div>${body}`;
+}
+function renderHost(){
+  if (H.view === "wrap") return renderWrap();
+  const st = H.state || {}, N = H.polls.length, i = Math.min(st.current || 0, Math.max(0, N - 1)), p = H.polls[i] || {}, link = joinUrl(H.session);
+  app.innerHTML = `<div class="card"><h3>Participants join here</h3><div class="join"><img src="${qrUrl(link, 300)}" alt="QR code" id="qr">
+      <div style="flex:1;min-width:200px"><div class="link">${esc(link)}</div>
+      <div class="row"><button class="btn ghost" id="copy">Copy link</button><button class="btn ghost" id="qrBig">Show QR full screen</button></div></div></div></div>
+    <div class="card"><div class="chips">${H.polls.map((q, k) => `<span class="chip ${k === i ? "cur" : ""}" data-k="${k}">${k + 1}. ${esc(q.title)}</span>`).join("")}</div></div>
+    ${N ? `<div class="card"><div class="meta"><span>POLL ${i + 1} of ${N}: ${esc(p.title)}</span><span>Type: ${esc(p.type)} | Timer: ${p.timer || 30}s</span></div>
+      ${st.mode === "self" ? `<span class="pill open">SELF-PACED: all polls open</span>` : st.open ? `<span class="pill open">OPEN</span> <span class="timer" id="ht"></span>` : `<span class="pill">CLOSED</span>`}
+      <div class="lbl">QUESTION:</div><div class="q">${esc(p.question)}</div>
+      ${p.notes ? `<div class="lbl">FACILITATOR NOTES</div><div class="note">${esc(p.notes)}</div>` : ""}
+      ${st.mode === "self" ? "" : `<div class="row"><button class="btn ghost" id="prev" ${i === 0 ? "disabled" : ""}>&#9664; Back</button>
+        ${st.open ? `<button class="btn red" id="toggle">Close poll</button>` : `<button class="btn" id="toggle">Open poll</button>`}
+        <button class="btn ghost" id="next" ${i >= N - 1 ? "disabled" : ""}>Next &#9654;</button></div>`}</div>
+      <div class="card"><h3>Live results</h3><div id="res">${resultsHtml(p, i + 1)}</div></div>` : `<div class="card warn">This poll set has no polls.</div>`}
+    <div class="card"><div class="row"><button class="btn alt" id="wrap">SESSION WRAP-UP</button><button class="btn ghost" id="csv">Download results (CSV)</button></div></div>`;
+
+  document.getElementById("copy").onclick = async () => { try { await navigator.clipboard.writeText(link); document.getElementById("copy").textContent = "Copied!"; } catch (e){ prompt("Copy this link:", link); } };
+  const big = () => { const d = document.createElement("div"); d.className = "qrfull";
+    d.innerHTML = `<img src="${qrUrl(link, 600)}" alt="QR"><h2>Scan to join: ${esc(H.session)}</h2><p>Click anywhere to close</p>`; d.onclick = () => d.remove(); document.body.appendChild(d); };
+  document.getElementById("qrBig").onclick = big; document.getElementById("qr").onclick = big;
+  document.querySelectorAll(".chip").forEach(c => c.onclick = () => control({ current: c.dataset.k, open: "false" }));
+  document.getElementById("wrap").onclick = () => { H.view = "wrap"; renderWrap(); };
+  document.getElementById("csv").onclick = downloadCsv;
+  if (N && st.mode !== "self"){
+    document.getElementById("prev").onclick = () => control({ current: i - 1, open: "false" });
+    document.getElementById("next").onclick = () => control({ current: i + 1, open: "false" });
+    document.getElementById("toggle").onclick = () => control({ open: st.open ? "false" : "true" });
+    if (st.open) countdown(document.getElementById("ht"), p.timer || 30, st.opened, () => { if (H.state.open && H.state.current === i) control({ open: "false" }); });
+  }
+}
+function renderWrap(){
+  app.innerHTML = `<div class="card"><h2>SESSION WRAP-UP</h2><div class="row"><button class="btn ghost" id="back">&#9664; Back to polls</button>
+      <button class="btn ghost" id="csv2">Download results (CSV)</button><button class="btn red" id="end">End session for everyone</button></div></div>
+    ${H.polls.map((p, k) => `<div class="card"><div class="meta"><span>POLL ${k + 1} of ${H.polls.length}: ${esc(p.title)}</span></div><div class="q">${esc(p.question)}</div>${resultsHtml(p, k + 1)}</div>`).join("")}`;
+  document.getElementById("back").onclick = () => { H.view = "live"; renderHost(); };
+  document.getElementById("csv2").onclick = downloadCsv;
+  document.getElementById("end").onclick = () => { if (confirm("End the session for everyone?")) control({ ended: "true", open: "false" }); };
+}
+function downloadCsv(){
+  const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const lines = [["Timestamp","Session","Poll Set","Trainer","Poll #","Poll Title","Poll Type","Response","Participant ID","Platform"].map(q).join(",")]
+    .concat(H.rows.map(r => [r.t, H.session, r.set, r.trainer, r.n, r.title, r.type, r.r, r.pid, r.platform].map(q).join(",")));
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv" }));
+  a.download = "flash-focus-" + H.session + ".csv"; document.body.appendChild(a); a.click(); a.remove();
+}
+
+route();
+</script>
+</body>
+</html>
