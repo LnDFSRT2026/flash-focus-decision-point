@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flash Focus Poll</title>
+<title>Flash Focus: Decision Point</title>
 <style>
   :root{--navy:#0b2341;--teal:#00a3ad;--light:#f3f6f9;--text:#1d2633;--muted:#5b6675;--line:#d5dbe3}
   *{box-sizing:border-box}
@@ -73,22 +73,52 @@
 <footer>Polls are not quizzes. There are no right or wrong answers.</footer>
 
 <script>
-/* ===== ONE-TIME SETUP: paste your Google Apps Script web app link (ends in /exec) between the quotes ===== */
+/* ===== ONE-TIME SETUP: your Google Apps Script web app link (ends in /exec) ===== */
 const ENDPOINT = "https://script.google.com/macros/s/AKfycbxVx4Z9eniumqjtMQFeT9UqBIdXx410lWbG47ls8NDglkh1Yh-dzxGpEmc3joyLTnLD/exec";
 const REFRESH_MS = 4000;
 
-/* ===================== APP CODE (no edits needed) ===================== */
+/* ===== POLLS FOR THIS PAGE =====
+   POLL_SET is the set name this page uses. If the Polls tab in your Google Sheet has rows with the
+   same Set name, the Sheet version wins. If not, the page uses the polls below. */
+const POLL_SET = "Flash Focus Demo";
+const WELCOME = "Welcome to Flash Focus";
 const SAMPLE_POLLS = [
-  {title:"Your Role",type:"Single Choice",timer:20,question:"Which best describes your role today?",
-   options:["Field adjuster","Desk adjuster","Assessor / inspector","QA reviewer","Operations / dispatch staff"]},
-  {title:"LiDAR Comfort Check",type:"Rating Scale",timer:20,question:"How comfortable do you feel using the LiDAR room scan in the Estimate\u2122 iOS app?",low:"Not comfortable",high:"Very comfortable"},
-  {title:"One Thing",type:"Open Text",timer:60,question:"What is one thing that would make your day-to-day work in the platform easier?"}
+ {
+  "title": "Your Role",
+  "type": "Single Choice",
+  "timer": 20,
+  "question": "Which best describes your role today?",
+  "options": [
+   "Field adjuster",
+   "Desk adjuster",
+   "Assessor / inspector",
+   "QA reviewer",
+   "Operations / dispatch staff"
+  ],
+  "notes": ""
+ },
+ {
+  "title": "LiDAR Comfort Check",
+  "type": "Rating Scale",
+  "timer": 20,
+  "question": "How comfortable do you feel using the LiDAR room scan in the Estimate™ iOS app?",
+  "low": "Not comfortable",
+  "high": "Very comfortable",
+  "notes": ""
+ },
+ {
+  "title": "One Thing",
+  "type": "Open Text",
+  "timer": 60,
+  "question": "What is one thing that would make your day-to-day work in the platform easier?",
+  "notes": ""
+ }
 ];
 
-/* Cleans the pasted link: removes HTML tags, spaces, smart quotes, anything after ? or #, and a trailing slash */
+/* ===================== APP CODE (no edits needed) ===================== */
 const API = String(ENDPOINT).replace(/<[^>]*>/g, "").replace(/[\s"'\u201C\u201D\u2018\u2019]/g, "").split(/[?#]/)[0].replace(/\/+$/, "");
 const CONFIGURED = /^https:\/\/script\.google(usercontent)?\.com\/.+\/exec$/.test(API);
-const APP_URL = location.origin + location.pathname.replace(/index\.html$/, "");
+const APP_URL = location.origin + location.pathname;
 const params = new URLSearchParams(location.search);
 const app = document.getElementById("app");
 const PLATFORM = /zoom/i.test(navigator.userAgent) ? "Zoom" : (window.parent !== window ? "Teams" : "Web");
@@ -104,9 +134,9 @@ function setSessLine(t){ document.getElementById("sessLine").textContent = t || 
 function joinUrl(code){ return APP_URL + "?session=" + encodeURIComponent(code); }
 function qrUrl(text, size){ return "https://api.qrserver.com/v1/create-qr-code/?margin=8&size=" + size + "x" + size + "&data=" + encodeURIComponent(text); }
 function setupWarn(){
-  return `<div class="warn"><b>Setup needed:</b> paste your Google Apps Script link into ENDPOINT in index.html. Until then you can only preview.
+  return `<div class="warn"><b>Setup needed:</b> paste your Google Apps Script link into ENDPOINT in this file. Until then you can only preview.
     <div class="lbl">LINK THIS PAGE SEES RIGHT NOW</div><div class="link">${esc(API || "(empty)")}</div>
-    The link must start with https://script.google.com/ and end with /exec. If this box shows an old link, save the file and refresh the page.</div>`;
+    The link must start with https://script.google.com/ and end with /exec.</div>`;
 }
 
 async function api(action, extra){
@@ -118,6 +148,12 @@ async function api(action, extra){
   const j = await r.json();
   if (!j.ok) throw new Error(j.error || "Request failed");
   return j;
+}
+async function loadPolls(set){
+  let polls = [];
+  try { polls = (await api("polls", { set })).polls || []; } catch(e){ if (set !== POLL_SET) throw e; }
+  if (!polls.length && set === POLL_SET) polls = SAMPLE_POLLS;
+  return polls;
 }
 function sendAnswer(obj){ return fetch(API, { method: "POST", mode: "no-cors", body: new URLSearchParams(obj) }); }
 
@@ -147,7 +183,7 @@ window.addEventListener("hashchange", route);
 function home(){
   setSessLine("");
   app.innerHTML = `${CONFIGURED ? "" : setupWarn()}
-    <div class="card"><h2>Welcome to Flash Focus</h2>
+    <div class="card"><h2>${esc(WELCOME)}</h2>
       <button class="btn" onclick="location.hash='/join'">I'm a participant</button>
       <button class="btn alt" onclick="location.hash='/host'">I'm the facilitator</button>
       <button class="btn ghost" onclick="location.hash='/preview'">Preview the polls</button></div>`;
@@ -157,7 +193,8 @@ function home(){
 function pollBody(p){
   if (p.type === "Single Choice" || p.type === "Multiple Choice"){
     const kind = p.type === "Single Choice" ? "radio" : "checkbox";
-    return (p.options || []).map(o => `<label class="opt"><input type="${kind}" name="a" value="${esc(o)}"> ${esc(o)}</label>`).join("");
+    return (p.options || []).map(o => `<label class="opt"><input type="${kind}" name="a" value="${esc(o)}"> ${esc(o)}</label>`).join("")
+      + (p.type === "Multiple Choice" ? `<p class="note">Choose all that apply.</p>` : "");
   }
   if (p.type === "Rating Scale") return `<div class="scale">${[1,2,3,4,5].map(v => `<label><input type="radio" name="a" value="${v}"><span>${v}</span></label>`).join("")}</div>
       <div class="scale-labels"><span>1 = ${esc(p.low || "Low")}</span><span>5 = ${esc(p.high || "High")}</span></div>`;
@@ -235,7 +272,7 @@ async function tickParticipant(){
     const { state } = await api("state", { session: P.session });
     if (state.ended) return wrapUpParticipant();
     if (!state.set) return waitScreen("Waiting for your facilitator to start\u2026", "Keep this page open.");
-    if (state.set !== P.set || !P.polls.length){ P.polls = (await api("polls", { set: state.set })).polls || []; P.set = state.set; app.dataset.view = ""; }
+    if (state.set !== P.set || !P.polls.length){ P.polls = await loadPolls(state.set); P.set = state.set; app.dataset.view = ""; }
     const N = P.polls.length; if (!N) return waitScreen("No polls found yet.");
     if (state.mode === "self"){
       const i = P.polls.findIndex((_, k) => !answered(k));
@@ -271,13 +308,14 @@ async function hostLogin(){
   app.innerHTML = `<div class="card"><h2>Start or resume a session</h2>
     <div class="field"><label for="hs">Session code</label><input type="text" id="hs" value="FF-${Math.random().toString(36).slice(2,6).toUpperCase()}"></div>
     <div class="field"><label for="hn">Your name (optional)</label><input type="text" id="hn"></div>
-    <div class="field"><label for="hset">Poll set</label><select id="hset"><option value="">Loading\u2026</option></select></div>
+    <div class="field"><label for="hset">Poll set</label><select id="hset"><option>${esc(POLL_SET)}</option></select></div>
     <div class="field"><label for="hm">How should polls run?</label><select id="hm"><option value="live">Live: I open each poll</option><option value="self">Self-paced</option></select></div>
     <div class="field"><label for="hp">Facilitator PIN</label><input type="password" id="hp"></div>
     <div class="err" id="err"></div><button class="btn alt" id="start">Start session</button></div>`;
   document.getElementById("start").onclick = hostStart;
   try { const { sets } = await api("sets");
-    document.getElementById("hset").innerHTML = sets.length ? sets.map(s => `<option>${esc(s)}</option>`).join("") : `<option value="">No poll sets: add rows to the Polls tab</option>`;
+    const all = [POLL_SET].concat(sets.filter(s => s !== POLL_SET));
+    document.getElementById("hset").innerHTML = all.map(s => `<option>${esc(s)}</option>`).join("");
   } catch (e){ document.getElementById("err").textContent = "Couldn't reach the Google Sheet. Check the ENDPOINT link and that access is set to Anyone."; }
 }
 async function hostStart(){
@@ -290,7 +328,7 @@ async function hostStart(){
   btn.disabled = true; btn.textContent = "Starting\u2026";
   try {
     await api("login", { pin: H.pin });
-    H.polls = (await api("polls", { set: H.set })).polls || [];
+    H.polls = await loadPolls(H.set);
     const { state } = await api("state", { session: H.session });
     const change = { session: H.session, pin: H.pin, set: H.set, mode, trainer: H.trainer, ended: "false" };
     if (state.set !== H.set){ change.current = 0; change.open = "false"; }
