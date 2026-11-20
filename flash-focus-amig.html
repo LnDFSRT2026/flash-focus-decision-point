@@ -83,10 +83,11 @@ const REFRESH_MS = 4000;
 const POLL_SET = "Flash Focus AMIG: Estimate Workflows";
 const WELCOME = "Welcome to Flash Focus: AMIG Estimate Workflows";
 const SAMPLE_POLLS = [
+ const SAMPLE_POLLS = [
  { "title": "Diagramming Today", "type": "Single Choice", "timer": 20,
    "question": "How often do you build diagrams in Estimate™?",
-   "options": ["Daily", "A few times a week", "A few times a month", "Rarely", "None"],
-   "notes": "Warm-up. If most answer Rarely or Not yet, spend more time on the diagramming basics. If most diagram daily, move faster to the time-saving tools." },
+   "options": ["Daily", "A few times a week", "A few times a month", "Rarely", "Not yet"],
+   "notes": "Warm-up. If most answer Rarely or Not yet, spend more time on the basics. If most diagram daily, move faster to the time-saving tools." },
  { "title": "Where to Focus", "type": "Ranking", "timer": 30,
    "question": "Rank these areas from the one you most want to work on today (top) to the least (bottom).",
    "options": ["Diagramming", "Line items", "Estimate edits"],
@@ -94,27 +95,30 @@ const SAMPLE_POLLS = [
  { "title": "Diagramming Toolkit", "type": "Multiple Choice", "timer": 40,
    "question": "Which of these diagramming tools do you use in Estimate™ today?",
    "options": ["Build Out", "Copy/Paste rooms", "Copy/Paste wall elements", "Default doors and windows", "None of these yet"],
-   "notes": "Point out the lowest-voted tools and ask: not used, or not known? Use the answers to decide what to demo first." },
+   "notes": "Point out the lowest-voted tools and ask: not used, or not known? Demo those first." },
  { "title": "Diagramming Confidence", "type": "Rating Scale", "timer": 30,
-   "question": "How confident are you using Build Out, Copy/Paste and default doors and windows to speed up your diagramming?",
+   "question": "How confident are you using Build Out, Copy/Paste and default doors and windows to speed up your diagrams?",
    "low": "Not confident", "high": "Very confident",
-   "notes": "If most answers are 1-2, slow down and demo each tool step by step. If most are 4-5, ask a confident user to share a shortcut they use." },
+   "notes": "If most answers are 1-2, demo each tool step by step. If most are 4-5, ask a confident user to share a shortcut." },
  { "title": "Repeat Line Items", "type": "Single Choice", "timer": 30,
-   "question": "How do you add the same items to multiple rooms?",
+   "question": "When the same line items belong in several rooms, what do you usually do?",
    "options": ["Add them room by room", "Copy/Paste rooms and items from an old diagram", "Use Assemblies/Batches", "Use Apply to Multiple Rooms", "It depends on the claim"],
-   "notes": "No right answer. If most add items room by room, that's your opening to show Copy/Paste, Assemblies/Batches and Apply to Multiple Rooms." },
+   "notes": "If most add items room by room, show Copy/Paste, Assemblies/Batches and Apply to Multiple Rooms." },
  { "title": "Bulk Estimate Edits", "type": "Rating Scale", "timer": 30,
    "question": "How confident are you making changes across many items at once, such as Search and Replace for coverage and depreciation, or editing multiple items?",
    "low": "Not confident", "high": "Very confident",
-   "notes": "If most answers are low, ask what has stopped people from trying it, then demo it live." },
+   "notes": "If scores are low, ask what has stopped people from trying it, then demo it live." },
  { "title": "Minimum Charges", "type": "Single Choice", "timer": 20,
    "question": "Which best describes your experience with enabling Minimum Charges?",
-   "options": ["I use it regularly", "I've used it a few times", "I know it's there but haven't used it", "This is new to me"],
+   "options": ["I enable it regularly", "I've used it a few times", "I know it's there but haven't used it", "This is new to me"],
    "notes": "If most choose the last two options, walk through where to enable Minimum Charges and when it applies." },
-  { "title": "Most Beneficial Tools", "type": "Multiple Choice", "timer": 45,
+ { "title": "Most Beneficial Tools", "type": "Multiple Choice", "timer": 45,
    "question": "Which tool(s) from today do you feel will be the most beneficial?",
    "options": ["(Diagram) Build-Out Mode", "(Diagram) Copy and Paste Rooms/Wall Elements", "(Diagram) Default Doors and Windows", "(Items) Assemblies and Batches", "(Items) Apply to Multiple Rooms", "(Items) Copy and Paste or Apply from Applied Items panel", "(Estimate) Search and Replace", "(Estimate) Editing Multiple Items", "(Estimate) Enabling Minimum Charges"],
-  
+   "notes": "Use the top picks as quick wins to reinforce. Tools with few votes may need a follow-up demo." },
+ { "title": "First Thing to Try", "type": "Open Text", "timer": 60,
+   "question": "Which tool from today will you try first on your next claim, and why?",
+   "notes": "Read a few answers aloud. Recurring themes show what to reinforce in follow-up sessions." }
 ];
 /* ===================== APP CODE (no edits needed) ===================== */
 const API = String(ENDPOINT).replace(/<[^>]*>/g, "").replace(/[\s"'\u201C\u201D\u2018\u2019]/g, "").split(/[?#]/)[0].replace(/\/+$/, "");
